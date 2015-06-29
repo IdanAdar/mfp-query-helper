@@ -11,7 +11,9 @@ Installation
 
 To install globally:
 
-    $ sudo python setup.py install
+```bash
+$ sudo python setup.py install
+```
 
 To uninstall globally, use the uninstall.sh script with root:
 
