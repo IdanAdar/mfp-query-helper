@@ -33,7 +33,7 @@ Currently, there are 3 queries that are supported: newDevices, mfpAppVersions, a
 
 To run one simply use:
 
-    $ mfp_query_helper <query_name>
+    $ mfp_query_helper [query]
 
 By default, this will search Elasticsearch host localhost:9500 on index 'worklight'
 
@@ -99,12 +99,12 @@ You can filter any query by app name, app version, device model, device os, devi
 
 A basic filter would look like:
 
-    $ mfp_query_helper <query_name> --mfpAppName myApp --mfpAppVersion 1.0
+    $ mfp_query_helper [query] --mfpAppName myApp --mfpAppVersion 1.0
 
 To filter on time range, use --startDate and --endDate arugments. These can either be epoch timestamps, or date
 strings of the format year,month,date i.e. 2014,4,24. Both startDate and endDate need to be used together.
 
-    $ mfp_query_helper <query_name> --startDate 2014,1,1 --endDate 2014,2,1
+    $ mfp_query_helper [query] --startDate 2014,1,1 --endDate 2014,2,1
 
 To get a full list of the command line arguments, run
 
