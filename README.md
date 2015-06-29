@@ -11,31 +11,87 @@ Installation
 
 To install globally:
 
+```
 $ sudo python setup.py install
+```
 
 To uninstall globally, use the uninstall.sh script with root:
 
+```
 $ sudo sh uninstall.sh
+```
 
 Or you can create a python virtual environment and install it there. Make sure the virtual environment uses
 python 2.7
 
+```
 $ virtualenv venv
 $ . venv/bin/activate
 $ python setup.py install
+```
 
 Basic Usage
 -----------
 
+```
 $ mfp_query_helper -h
+```
 
 Currently, there are 3 queries that are supported: newDevices, mfpAppVersions, and distinctMfpAppVersions
 
 To run one simply use:
 
+```
 $ mfp_query_helper <query_name>
+```
 
 By default, this will search Elasticsearch host localhost:9500 on index 'worklight'
+
+Queries
+-------
+
+##### newDevices
+
+This query will return an array of JSON objects, representing a date where new devices connected
+to the MobileFirst Platform
+
+```
+[{'count': 2, 'date': 1435536000000}]
+```
+
+##### mfpAppVersions
+
+This query will return a JSON object of the total count of all combinations of MFP Apps and versions.
+This means if a device updated MyApp version 1.0 to 2.0, it will be counted in both versions
+
+```
+{
+    'MyApp': {
+        '1.0': 2,
+        '2.0': 5
+    },
+    'OtherApp': {
+        '1.0': 10
+    }
+}
+```
+
+##### distinctMfpAppVersions
+
+This query will return a JSON object of the distinct count of all combinations of MFP Apps and versions.
+This means if a device updates MyApp version 1.0 to 2.0, it will only be counted in version 2.0
+
+```
+{
+    'MyApp': {
+        '1.0': 1,
+        '2.0': 2
+    },
+    'OtherApp': {
+        '1.0': 10
+    }
+}
+```
 
 Command Line Arguments
 ----------------------
