@@ -101,15 +101,11 @@ Elasticsearch config
 
 To change the Elasticsearch host to query, use -esHost:
 
-```
 $ mfp_query_helper -esHost myhost.com:9500
-```
 
 To change the index to query, use -esIndex:
 
-```
 $ mfp_query_helper -esIndex otherindex
-```
 
 Filtering
 ---------
