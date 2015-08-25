@@ -1,4 +1,4 @@
-from utils import DateUtils, MfpUtils, QueryNotFoundError
+from mfp_query_helper.utils import DateUtils, MfpUtils, QueryNotFoundError
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
 from datetime import datetime
@@ -13,6 +13,7 @@ class Queries:
 DEVICES_DOC_TYPE = 'Devices'
 SCROLL_SIZE = 100000
 
+
 def create_es(es_config):
     return Elasticsearch(hosts=[
         {
@@ -22,6 +23,14 @@ def create_es(es_config):
 
 
 def get_new_devices(filter_parameters, es_config):
+    '''
+    returns list of objects:
+    {
+        'date': 0, // day stamp
+        'count': 0 // number of devices on that day
+    }
+    representing devices first appearance
+    '''
     es = create_es(es_config)
 
     unique_devices = {}
@@ -56,6 +65,17 @@ def get_new_devices(filter_parameters, es_config):
 
 
 def get_mfp_app_versions(filter_parameters, es_config):
+    '''
+    returns counts of all app versions
+    {
+        'App Name': {
+            '1.0': 100,
+            '2.0': 52.
+            ...
+        }
+        ...
+    }
+    '''
     es = create_es(es_config)
 
     query = {}
@@ -109,6 +129,7 @@ def get_mfp_app_versions(filter_parameters, es_config):
 
 
 def get_distinct_mfp_app_versions(filter_parameters, es_config):
+    '''returns counts of distinct app names and versions'''
     es = create_es(es_config)
 
     unique_devices = {}
@@ -119,6 +140,7 @@ def get_distinct_mfp_app_versions(filter_parameters, es_config):
 
         if device_key in unique_devices:
             app_version = device.get('mfpAppVersion')
+            # only get latest version
             if not MfpUtils.version_less_than(app_version, unique_devices[device_key].get('mfpAppVersion')):
                 unique_devices[device_key] = device
         else:

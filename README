@@ -1,0 +1,144 @@
+MFP Query Helper
+================
+
+The MFP Query Helper command line program helps extract information from MFP Analytics version 7.1
+
+This tool depends on python 2.7
+
+Installation
+------------
+
+To install the mfp_query_helper CLI:
+
+$ sudo python setup.py install
+
+To uninstall, use the uninstall.sh script with root:
+
+$ sudo sh uninstall.sh
+
+You can also create a python virtual environment, if you do not wish to install globally.
+Make sure the virtual environment uses python 2.7
+
+$ virtualenv venv
+$ . venv/bin/activate
+$ python setup.py install
+
+Preparing your cluser for querying
+----------------------------------
+The Elasticsearch http endpoint must be enabled for the tool to query your datastore.
+To enable to the http endpoint, add the JNDI property “analytics/http.enabled” to your
+cluster with value “true”.
+
+Basic Usage
+-----------
+$ mfp_query_helper -h
+
+Currently, there are 3 queries that are supported: newDevices, mfpAppVersions, and distinctMfpAppVersions.
+
+To run one simply use:
+
+$ mfp_query_helper <query_name>
+
+By default, this will search Elasticsearch host localhost:9500 on index 'worklight'.
+
+Query Information
+-----------------
+- newDevices
+    The newDevices query returns an array of new devices per day. A device is considered
+    new the first time it connects to your MFP server.
+
+    Response payload looks like
+    [
+        {
+            'date': 0000000000, // timestamp of day
+            'count': 0 // number of new devices on that day
+        },
+        ...
+    ]
+- mfpAppVersions
+    The mfpAppVersions query returns a count of all devices that have connected to a
+    an MFP application. An MFP application is considered a unique combination of app
+    name and app version.
+
+    Response payload looks like
+    {
+        'AppName1': {
+            '1.0': 20,
+            '2.0': 25,
+            ...
+        },
+        ...
+    }
+
+    It is important to note that if a device connects to AppName1 version 1.0 and version
+    2.0, it is counted in both. If you would like distinct devices, use distinctMfpAppVersions
+    query.
+- distinctMfpAppVersions
+    The distinctMfpAppVersions query returns a count of unique devices that have connected
+    to an MFP application. An MFP application is considered a unique combination of app
+    name and app version. For this query, the latest app version will be used.
+
+    For example, if a device connects to AppName1 versions 1.0, 2.0 and 3.0, it will only
+    be counted in version 3.0.
+
+    Response payload looks like
+    {
+        'AppName1': {
+            '1.0': 20,
+            '2.0': 25,
+            ...
+        },
+        ...
+    }
+
+Command Line Arguments
+----------------------
+
+There are command line arguments for Elasticsearch configuration, and to filter the given queries
+
+Elasticsearch config
+--------------------
+
+To change the Elasticsearch host to query, use -esHost:
+
+```
+$ mfp_query_helper -esHost myhost.com:9500
+```
+
+To change the index to query, use -esIndex:
+
+```
+$ mfp_query_helper -esIndex otherindex
+```
+
+Filtering
+---------
+
+You can filter any query by app name, app version, device model, device os, device os version, and time range.
+
+A basic filter would look like:
+
+$ mfp_query_helper <query_name> --mfpAppName myApp --mfpAppVersion 1.0
+
+The keys for filtering are as follows
+- mfpAppName
+- mfpAppVersion
+- deviceModel
+- deviceOS
+- deviceOSversion
+
+Time range filter use
+- startDate
+- endDate
+
+startDate and endDate parameters can be epoch timestamps or date strings of the format
+year,month,date (i.e. 2014,4,24). Both startDate and endDate need to be used together.
+
+$ mfp_query_helper <query_name> --startDate 2014,1,1 --endDate 2014,2,1
+
+Some Examples
+-------------
+
+To get all new devices for the app "Insurance App" with Elasticsearch running on mysite.com, port 9500, index myindex
+
+$ mfp_query_helper newDevices -esHost mysite.com:9500 -esIndex myindex --mfpAppName "Insurance App"

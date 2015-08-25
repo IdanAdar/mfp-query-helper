@@ -1,9 +1,8 @@
-from utils import FilterParameters, ESConfig, DateUtils, QueryNotFoundError
-from query_engine import run_query, Queries
+from mfp_query_helper.utils import FilterParameters, ESConfig, DateUtils, QueryNotFoundError
+from mfp_query_helper.query_engine import run_query, Queries
 from elasticsearch.exceptions import ConnectionError, NotFoundError
 import argparse
 import re
-
 
 def validate_date_argument(value, end_date=False):
     '''
