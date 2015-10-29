@@ -1,4 +1,4 @@
-from mfp_query_helper.utils import FilterParameters, ESConfig, DateUtils, QueryNotFoundError
+from mfp_query_helper.utils import FilterParameters, Config, DateUtils, QueryNotFoundError
 from mfp_query_helper.query_engine import run_query, Queries
 from elasticsearch.exceptions import ConnectionError, NotFoundError
 import argparse
@@ -62,6 +62,9 @@ def main():
     parser.add_argument('--endDate', help=(
         'End date for a time ranged filter. This must be used with a startDate and '
         'must be in the format \'year,month,day\''))
+    parser.add_argument('--timeout', type=int, help='Operation timeout in seconds. Defaults to 10')
+    parser.add_argument('--scroll_size', type=int, help='Size for each scroll while querying. Defaults to 10,000')
+    parser.add_argument('--debug', default=False, action='store_true')
 
     args = parser.parse_args()
 
@@ -88,27 +91,19 @@ def main():
         filter_parameters.start_date = start_date
         filter_parameters.end_date = end_date
 
-    es_config = ESConfig()
+    config = Config(args)
 
-    if args.esHost:
-        host, port = args.esHost.split(':')
-        if host is None or port is None:
-            parser.error('Invalid Elasticsearch host {0}. Please use the format <host>:<port>'.format(args.esHost))
-
-        es_config.host = host
-        es_config.port = port
-
-    if args.esIndex:
-        es_config.index = args.esIndex
-
-    try:
-        run_query(args.query, filter_parameters, es_config)
-    except QueryNotFoundError:
-        print('No query named {0}. Available queries are: {1}'.format(args.query, ', '.join(Queries.ALL_QUERIES)))
-    except ConnectionError:
-        print('Could not connect to {0}'.format(es_config.get_full_host()))
-    except NotFoundError as e:
-        print('Error running query: {0}'.format(e))
+    if config.debug:
+        run_query(args.query, filter_parameters, config)
+    else:
+        try:
+            run_query(args.query, filter_parameters, config)
+        except QueryNotFoundError:
+            print('No query named {0}. Available queries are: {1}'.format(args.query, ', '.join(Queries.ALL_QUERIES)))
+        except ConnectionError:
+            print('Could not connect to {0}'.format(config.get_full_host()))
+        except NotFoundError as e:
+            print('Error running query: {0}'.format(e))
 
 if __name__ == '__main__':
     main()

@@ -2,13 +2,35 @@ from datetime import datetime
 import calendar
 import time
 
-class ESConfig(object):
-    def __init__(self, host='localhost',
-            port='9500', index='worklight'):
+class Config(object):
+    def __init__(self, cli_args):
+        # defaults
+        self.host = 'localhost'
+        self.port = '9500'
+        self.index = 'worklight'
+        self.timeout = 10
+        self.scroll_size = 10000
+        self.debug = False
+
+        if cli_args.esHost:
+            host, port = cli_args.esHost.split(':')
+            if host is None or port is None:
+                parser.error('Invalid Elasticsearch host {0}. Please use the format <host>:<port>'.format(cli_args.esHost))
+
         self.host = host
         self.port = port
-        self.index = index
 
+        if cli_args.esIndex:
+            self.index = cli_args.esIndex
+
+        if cli_args.timeout:
+            self.timeout = cli_args.timeout
+
+        if cli_args.scroll_size:
+            self.scroll_size = cli_args.scroll_size
+
+        if cli_args.debug:
+            self.debug = True
 
     def get_full_host(self):
         return '{0}:{1}'.format(self.host, self.port)

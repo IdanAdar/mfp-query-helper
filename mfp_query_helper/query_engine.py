@@ -11,18 +11,18 @@ class Queries:
     ALL_QUERIES = [NEW_DEVICES, MFP_APP_VERSTIONS, DISTINCT_MFP_APP_VERSIONS]
 
 DEVICES_DOC_TYPE = 'Devices'
-SCROLL_SIZE = 100000
 
 
-def create_es(es_config):
+def create_es(config):
     return Elasticsearch(hosts=[
         {
-            'host': es_config.host,
-            'port': es_config.port
-        }])
+            'host': config.host,
+            'port': config.port
+        }],
+        timeout=config.timeout)
 
 
-def get_new_devices(filter_parameters, es_config):
+def get_new_devices(filter_parameters, config):
     '''
     returns list of objects:
     {
@@ -31,11 +31,13 @@ def get_new_devices(filter_parameters, es_config):
     }
     representing devices first appearance
     '''
-    es = create_es(es_config)
+    es = create_es(config)
 
     unique_devices = {}
+
+    print('ss: ' + str(config.scroll_size))
     for device in scan(es, query=filter_parameters.build_filtered_query(),
-            index=es_config.index, doc_type=DEVICES_DOC_TYPE, size=SCROLL_SIZE):
+            index=config.index, doc_type=DEVICES_DOC_TYPE, size=config.scroll_size):
         device = device.get('_source')
         deviceID = device.get('deviceID')
 
@@ -64,7 +66,7 @@ def get_new_devices(filter_parameters, es_config):
     return results
 
 
-def get_mfp_app_versions(filter_parameters, es_config):
+def get_mfp_app_versions(filter_parameters, config):
     '''
     returns counts of all app versions
     {
@@ -76,7 +78,7 @@ def get_mfp_app_versions(filter_parameters, es_config):
         ...
     }
     '''
-    es = create_es(es_config)
+    es = create_es(config)
 
     query = {}
     filter_obj = filter_parameters.build_filter()
@@ -104,7 +106,7 @@ def get_mfp_app_versions(filter_parameters, es_config):
         }
     }
 
-    search = es.search(index=es_config.index, doc_type=DEVICES_DOC_TYPE, body=query)
+    search = es.search(index=config.index, doc_type=DEVICES_DOC_TYPE, body=query)
     app_buckets = search.get('aggregations').get('app_agg').get('buckets')
 
     results = {}
@@ -128,13 +130,13 @@ def get_mfp_app_versions(filter_parameters, es_config):
     return results
 
 
-def get_distinct_mfp_app_versions(filter_parameters, es_config):
+def get_distinct_mfp_app_versions(filter_parameters, config):
     '''returns counts of distinct app names and versions'''
-    es = create_es(es_config)
+    es = create_es(config)
 
     unique_devices = {}
     for device in scan(es, query=filter_parameters.build_filtered_query(),
-            index=es_config.index, doc_type=DEVICES_DOC_TYPE, size=SCROLL_SIZE):
+            index=config.index, doc_type=DEVICES_DOC_TYPE, size=SCROLL_SIZE):
         device = device.get('_source')
         device_key = device.get('deviceID') + device.get('mfpAppName')
 
@@ -165,13 +167,13 @@ def get_distinct_mfp_app_versions(filter_parameters, es_config):
     return results
 
 
-def run_query(query_name, filter_parameters, es_config):
+def run_query(query_name, filter_parameters, config):
     if query_name not in Queries.ALL_QUERIES:
         raise QueryNotFoundError('No query named {0}'.format(query_name))
 
     if query_name == Queries.NEW_DEVICES:
-        print(get_new_devices(filter_parameters, es_config))
+        print(get_new_devices(filter_parameters, config))
     elif query_name == Queries.MFP_APP_VERSTIONS:
-        print(get_mfp_app_versions(filter_parameters, es_config))
+        print(get_mfp_app_versions(filter_parameters, config))
     elif query_name == Queries.DISTINCT_MFP_APP_VERSIONS:
-        print(get_distinct_mfp_app_versions(filter_parameters, es_config))
+        print(get_distinct_mfp_app_versions(filter_parameters, config))
