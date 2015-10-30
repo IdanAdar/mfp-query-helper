@@ -12,7 +12,7 @@ To install the mfp_query_helper CLI:
 
 $ sudo python setup.py install
 
-To uninstall, use the uninstall.sh script with root:
+To uninstall (on unix systems), use the uninstall.sh script with root:
 
 $ sudo sh uninstall.sh
 
@@ -96,6 +96,54 @@ Command Line Arguments
 
 There are command line arguments for Elasticsearch configuration, and to filter the given queries
 
+Usage:
+```
+usage: mfp_query_helper [-h] [-esHost ESHOST] [-esIndex ESINDEX]
+                        [--mfpAppName MFPAPPNAME]
+                        [--mfpAppVersion MFPAPPVERSION]
+                        [--deviceModel DEVICEMODEL] [--deviceOS DEVICEOS]
+                        [--deviceOSversion DEVICEOSVERSION]
+                        [--startDate STARTDATE] [--endDate ENDDATE]
+                        [--timeout TIMEOUT] [--scroll_size SCROLL_SIZE]
+                        [--debug]
+                        query
+
+MFP Query Helper
+
+positional arguments:
+  query                 Name of the query you want to run. Available queries
+                        are: newDevices, mfpAppVersions,
+                        distinctMfpAppVersions
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -esHost ESHOST        Host configuration for Elasticsearch. The default is
+                        localhost:9500. Please use format <host>:<port>
+  -esIndex ESINDEX      Elasticseach index to seach on. The default is
+                        worklight.
+  --mfpAppName MFPAPPNAME
+                        MFP app name to filter on
+  --mfpAppVersion MFPAPPVERSION
+                        MFP version name to filter on
+  --deviceModel DEVICEMODEL
+                        Device model to filter on
+  --deviceOS DEVICEOS   Device OS to filter on
+  --deviceOSversion DEVICEOSVERSION
+                        Device OS version to filter on
+  --startDate STARTDATE
+                        Start date for time ranged filter. This must be used
+                        with an endDate and must be in the format
+                        'year,month,day'
+  --endDate ENDDATE     End date for a time ranged filter. This must be used
+                        with a startDate and must be in the format
+                        'year,month,day'
+  --timeout TIMEOUT     Operation timeout in seconds. Defaults to 10
+  --scroll_size SCROLL_SIZE
+                        Size for each scroll while querying. Defaults to
+                        10,000
+  --debug
+  ```
+
 Elasticsearch config
 --------------------
 
@@ -131,6 +179,30 @@ startDate and endDate parameters can be epoch timestamps or date strings of the 
 year,month,date (i.e. 2014,4,24). Both startDate and endDate need to be used together.
 
 $ mfp_query_helper <query_name> --startDate 2014,1,1 --endDate 2014,2,1
+
+Other
+-----
+
+There are a few other command line arguments for greater control over the queries
+
+- timeout: operation timeout for the query
+- scroll_size: number of documents to fetch at a time using the Elasticsearch scroll API
+- debug: enables more debug output
+
+Troubleshooting
+---------------
+
+If you are running into issues run the same query with the --debug flag. This should give you more output and
+help to determine what the problem is. If the query is timing out, inscrease the timeout duration using the
+--timeout argument. If the Python program is running out of memory (MemoryError), try adjusting the --scroll_size.
+More information about scrolling is below.
+
+How the query works below with the scroll API:
+
+The Elasticsearch scroll API allows you to "scan" through every document from any index and type efficiently. We use this
+API in this tool to query all of the Devices documents. This means that each scroll iteration is bringing scroll_size number
+of documents into memory, and iterating over them. Depending on the query and the number of Devices documents you have,
+this could cause the Python interpretor to run out of memory. Try tweaking the scroll_size parameter when this happens.
 
 Some Examples
 -------------
