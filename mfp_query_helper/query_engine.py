@@ -36,6 +36,10 @@ def get_new_devices(filter_parameters, config):
     unique_devices = {}
 
     print('ss: ' + str(config.scroll_size))
+
+    if config.debug:
+        print('Query to be executed: ' + str(filter_parameters.build_filtered_query()))
+
     for device in scan(es, query=filter_parameters.build_filtered_query(),
             index=config.index, doc_type=DEVICES_DOC_TYPE, size=config.scroll_size):
         device = device.get('_source')
