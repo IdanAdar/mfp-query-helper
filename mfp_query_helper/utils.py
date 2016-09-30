@@ -163,6 +163,11 @@ class DateUtils(object):
         year, month, day = int(year), int(month), int(day)
         return int(time.mktime(datetime(year, month, day, 23, 59, 59).timetuple())*1000)
 
+class TypeUtils(object):
+    @staticmethod
+    def convert_dict_to_string(dictionary):
+        return dict((str(k), str(v))
+            for k, v in dictionary.items())
 
 class MfpUtils(object):
     @staticmethod
