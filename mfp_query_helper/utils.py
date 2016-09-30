@@ -70,8 +70,20 @@ class FilterParameters(object):
         if self.device_os_version:
             must_clauses.append(self._new_term('deviceOSversion', self.device_os_version))
 
-        range_filter = None
+        filter_obj = {}
+        if must_clauses:
+            filter_obj['bool'] = {
+                'must': must_clauses
+            }
 
+        return filter_obj
+
+    def build_query(self):
+        if not any([self.start_date and self.end_date]):
+            return None
+
+        filtered_query_obj = {}
+        range_filter = None
         if self.start_date and self.end_date:
             range_filter = {
                 'firstAccessTimestamp': {
@@ -82,35 +94,36 @@ class FilterParameters(object):
                 }
             }
 
-        filter_obj = {}
-        if must_clauses:
-            filter_obj['bool'] = {
-                'must': must_clauses
-            }
-
         if range_filter:
-            filter_obj['range'] = range_filter
+            filtered_query_obj['range'] = range_filter
 
-        return filter_obj
-
+        return filtered_query_obj
 
     def build_filtered_query(self):
-        filter_obj = self.build_filter()
-        if not filter_obj:
-           return {
-                'query': {
-                    'match_all': {}
-                }
-            }
+        query_obj = {}
 
-        return {
-            'query': {
+        filtered_query_obj = self.build_query()
+        filter_obj = self.build_filter()
+        '''Apply queries and filters'''
+        if filter_obj and filtered_query_obj:
+            query_obj['query'] = {
                 'filtered': {
+                    'query': filtered_query_obj,
                     'filter': filter_obj
                 }
             }
-        }
+        elif filter_obj:
+            query_obj['query'] = {
+                'filtered': {
+                    'query': filter_obj
+                }
+            }
+        else:
+            query_obj['query'] = {
+                'match_all': {}
+            }
 
+        return query_obj
 
     def _new_term(self, name, value):
         '''Creates a term object for filters'''
@@ -119,7 +132,6 @@ class FilterParameters(object):
                 name: value
             }
         }
-
 
     def __str__(self):
         data = {
