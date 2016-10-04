@@ -1,4 +1,4 @@
-from mfp_query_helper.utils import DateUtils, MfpUtils, QueryNotFoundError
+from mfp_query_helper.utils import DateUtils, MfpUtils, TypeUtils, QueryNotFoundError
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
 from datetime import datetime
@@ -36,6 +36,10 @@ def get_new_devices(filter_parameters, config):
     unique_devices = {}
 
     print('ss: ' + str(config.scroll_size))
+
+    if config.debug:
+        print('Query to be executed: ' + str(filter_parameters.build_filtered_query()))
+
     for device in scan(es, query=filter_parameters.build_filtered_query(),
             index=config.index, doc_type=DEVICES_DOC_TYPE, size=config.scroll_size):
         device = device.get('_source')
@@ -56,13 +60,15 @@ def get_new_devices(filter_parameters, config):
         device_date = datetime.fromtimestamp(float(int(device.get('firstAccessTimestamp'))/1000))
         # get the timestamp of the beginning of the day in UTC
         day_timestamp = DateUtils.get_day_timestamp_gmt(device_date)
+        # convert dictionary from unicode to string keys and values
+        device_obj_str = TypeUtils.convert_dict_to_string(device)
 
         day_in_results = next((item for item in results if item['date'] == day_timestamp), None)
         if day_in_results:
             day_in_results['count'] += 1
+            day_in_results['devices'].append(device_obj_str)
         else:
-            results.append({'count': 1, 'date': day_timestamp})
-
+            results.append({'count': 1, 'date': day_timestamp, 'devices': [device_obj_str]})
     return results
 
 
